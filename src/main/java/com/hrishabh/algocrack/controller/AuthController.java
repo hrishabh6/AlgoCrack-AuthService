@@ -48,6 +48,11 @@ public class AuthController {
 
     }
 
+    @GetMapping("/oauth2/success")
+    public String test() {
+        return "You hit backend!";
+    }
+
     @PostMapping("/signin")
     public ResponseEntity<?> signIn(@RequestBody AuthRequestDto authRequestDto, HttpServletResponse response) {
         System.out.println("Request comming : "  + authRequestDto.getEmail() + " " + authRequestDto.getPassword());

@@ -23,7 +23,7 @@ import java.util.function.Function;
 public class JwtService {
 
     /**
-     * Injects the JWT expiry time in seconds from application properties (e.g., application.properties or application.yml).
+     * Injects the JWT expiry time in seconds from application properties (e.g., application.properties or application.properties).
      */
     @Value("${jwt.expiry}")
     private int expiry;

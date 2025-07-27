@@ -3,6 +3,8 @@ package com.hrishabh.algocrack.config;
 
 
 import com.hrishabh.algocrack.filter.JwtAuthFilter;
+import com.hrishabh.algocrack.services.CustomOAuth2UserService;
+import com.hrishabh.algocrack.services.CustomOidcUserService;
 import com.hrishabh.algocrack.services.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -11,6 +13,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -31,7 +34,7 @@ public class SpringSecurityConfig{
 
 
     @Bean
-    public SecurityFilterChain web(HttpSecurity http) throws Exception {
+    public SecurityFilterChain web(HttpSecurity http, CustomOAuth2UserService customOAuth2UserService, OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler, CustomOidcUserService customOidcUserService) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(AbstractHttpConfigurer::disable)
@@ -42,6 +45,13 @@ public class SpringSecurityConfig{
 
                 )
                 .authenticationProvider(authenticationProvider())
+                .oauth2Login(oauth -> oauth
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService)
+                                .oidcUserService(customOidcUserService)
+                        )
+                        .successHandler(oAuth2AuthenticationSuccessHandler)
+                )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
 
