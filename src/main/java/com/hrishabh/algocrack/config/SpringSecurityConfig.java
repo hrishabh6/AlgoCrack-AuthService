@@ -31,6 +31,8 @@ public class SpringSecurityConfig {
     @Autowired
     private JwtAuthFilter jwtAuthFilter;
 
+
+
     @Bean
     public SecurityFilterChain web(HttpSecurity http, CustomOAuth2UserService customOAuth2UserService,
             OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler,
@@ -41,6 +43,8 @@ public class SpringSecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/signup").permitAll()
                         .requestMatchers("/api/v1/auth/signin").permitAll()
+                        .requestMatchers("/api/v1/auth/oauth2/**").permitAll()
+                        .requestMatchers("/api/v1/auth/login/oauth2/**").permitAll()
                         .requestMatchers("/api/v1/auth/validate").authenticated()
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
@@ -59,6 +63,10 @@ public class SpringSecurityConfig {
                         }))
                 .authenticationProvider(authenticationProvider())
                 .oauth2Login(oauth -> oauth
+                        .authorizationEndpoint(authorization -> authorization
+                                .baseUri("/api/v1/auth/oauth2/authorization"))
+                        .redirectionEndpoint(redirection -> redirection
+                                .baseUri("/api/v1/auth/login/oauth2/code/*"))
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService)
                                 .oidcUserService(customOidcUserService))

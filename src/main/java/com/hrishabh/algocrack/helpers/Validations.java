@@ -1,7 +1,5 @@
 package com.hrishabh.algocrack.helpers;
-
 import com.hrishabh.algocrack.repository.UserRepository;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
 @Component
