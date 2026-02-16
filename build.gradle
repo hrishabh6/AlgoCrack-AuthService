@@ -37,7 +37,7 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    implementation 'com.hrishabh:AlgoCrack-EntityService:0.0.3-SNAPSHOT'
+    implementation 'com.hrishabh:AlgoCrack-EntityService:0.1.4-SNAPSHOT'
 
     implementation("io.jsonwebtoken:jjwt:0.12.5")
 }

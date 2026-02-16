@@ -70,8 +70,13 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
             userRepository.save(user);
         }
 
-        // Issue JWT
-        String token = jwtService.createToken(user.getEmail());
+        // Create claims with userId and role
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", user.getUserId());
+        claims.put("role", "USER"); // TODO: use user.getRole() when available
+
+        // Issue JWT with claims
+        String token = jwtService.createToken(claims, user.getEmail());
         logger.info("JWT issued for user {}: {}", user.getEmail(), token);
 
         // Append JWT to attributes
@@ -81,7 +86,6 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         return new DefaultOAuth2User(
                 oauth2User.getAuthorities(),
                 attributes,
-                "email"
-        );
+                "email");
     }
 }

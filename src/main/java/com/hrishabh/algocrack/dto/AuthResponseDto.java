@@ -9,4 +9,5 @@ import lombok.*;
 @AllArgsConstructor
 public class AuthResponseDto {
     public boolean success;
+    public String token;
 }

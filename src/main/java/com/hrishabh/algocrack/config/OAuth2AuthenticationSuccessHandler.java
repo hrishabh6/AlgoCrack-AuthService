@@ -18,8 +18,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
     public void onAuthenticationSuccess(
             HttpServletRequest request,
             HttpServletResponse response,
-            Authentication authentication
-    ) throws IOException, ServletException {
+            Authentication authentication) throws IOException, ServletException {
 
         if (authentication.getPrincipal() instanceof OAuth2User) {
             OAuth2User oauthUser = (OAuth2User) authentication.getPrincipal();
@@ -47,8 +46,9 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
 
             response.addCookie(jwtCookie);
 
-            // 🔁 Step 3: Redirect without token in URL
-            response.sendRedirect("http://localhost:3000/oauth2/success");
+            // 🔁 Step 3: Redirect with token in URL for frontend to capture
+            // Frontend can read ?token=... and store it for Bearer auth
+            response.sendRedirect("http://localhost:3000/oauth2/success?token=" + jwtToken);
         } else {
             response.sendRedirect("http://localhost:3000/oauth2/success?token=error");
         }

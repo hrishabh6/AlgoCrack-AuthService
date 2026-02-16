@@ -1,8 +1,7 @@
 package com.hrishabh.algocrack.config;
 
-
-
 import com.hrishabh.algocrack.filter.JwtAuthFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import com.hrishabh.algocrack.services.CustomOAuth2UserService;
 import com.hrishabh.algocrack.services.CustomOidcUserService;
 import com.hrishabh.algocrack.services.UserDetailsServiceImpl;
@@ -27,14 +26,15 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 @EnableWebSecurity
-public class SpringSecurityConfig{
+public class SpringSecurityConfig {
 
     @Autowired
     private JwtAuthFilter jwtAuthFilter;
 
-
     @Bean
-    public SecurityFilterChain web(HttpSecurity http, CustomOAuth2UserService customOAuth2UserService, OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler, CustomOidcUserService customOidcUserService) throws Exception {
+    public SecurityFilterChain web(HttpSecurity http, CustomOAuth2UserService customOAuth2UserService,
+            OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler,
+            CustomOidcUserService customOidcUserService) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(AbstractHttpConfigurer::disable)
@@ -42,18 +42,28 @@ public class SpringSecurityConfig{
                         .requestMatchers("/api/v1/auth/signup").permitAll()
                         .requestMatchers("/api/v1/auth/signin").permitAll()
                         .requestMatchers("/api/v1/auth/validate").authenticated()
-
-                )
+                        .anyRequest().authenticated())
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            // For API requests, return 401 JSON instead of OAuth2 redirect
+                            if (request.getRequestURI().startsWith("/api/")) {
+                                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                response.setContentType("application/json");
+                                response.getWriter().write(
+                                        "{\"error\":\"Unauthorized\",\"message\":\"" + authException.getMessage()
+                                                + "\"}");
+                            } else {
+                                // For non-API requests (browser), redirect to OAuth2
+                                response.sendRedirect("/oauth2/authorization/google");
+                            }
+                        }))
                 .authenticationProvider(authenticationProvider())
                 .oauth2Login(oauth -> oauth
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService)
-                                .oidcUserService(customOidcUserService)
-                        )
-                        .successHandler(oAuth2AuthenticationSuccessHandler)
-                )
+                                .oidcUserService(customOidcUserService))
+                        .successHandler(oAuth2AuthenticationSuccessHandler))
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
-
 
         return http.build();
     }
@@ -64,14 +74,15 @@ public class SpringSecurityConfig{
     }
 
     @Bean
-    public AuthenticationProvider  authenticationProvider() {
+    public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider(userDetailsService());
         daoAuthenticationProvider.setPasswordEncoder(passwordEncoder());
         return daoAuthenticationProvider;
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
+            throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
 
     }
@@ -98,8 +109,5 @@ public class SpringSecurityConfig{
             }
         };
     }
-
-
-
 
 }
