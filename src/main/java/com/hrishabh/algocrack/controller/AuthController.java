@@ -3,6 +3,7 @@ package com.hrishabh.algocrack.controller;
 import com.hrishabh.algocrack.dto.AuthRequestDto;
 import com.hrishabh.algocrack.dto.AuthResponseDto;
 import com.hrishabh.algocrack.dto.UserDto;
+import com.hrishabh.algocrack.dto.UserInfoDto;
 import com.hrishabh.algocrack.dto.UserSignupRequestDto;
 import com.hrishabh.algocrack.repository.UserRepository;
 import com.hrishabh.algocrack.services.AuthService;
@@ -99,6 +100,28 @@ public class AuthController {
             System.out.println(cookie.getName() + " : " + cookie.getValue());
         }
         return ResponseEntity.ok("Success");
+    }
+
+    // ── Inter-Service APIs (Phase 7) ──────────────────────────────────
+
+    /**
+     * Get user details by userId.
+     * Called by ProblemService's UserProfileService.
+     */
+    @GetMapping("/users/{userId}")
+    public ResponseEntity<UserInfoDto> getUserByUserId(@PathVariable String userId) {
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("User not found: " + userId));
+        return ResponseEntity.ok(UserInfoDto.fromEntity(user));
+    }
+
+    /**
+     * Check if a user exists by userId.
+     * Called by ProblemService's UserProfileService (heatmap validation).
+     */
+    @GetMapping("/users/{userId}/exists")
+    public ResponseEntity<Boolean> userExists(@PathVariable String userId) {
+        return ResponseEntity.ok(userRepository.existsByUserId(userId));
     }
 
 }
