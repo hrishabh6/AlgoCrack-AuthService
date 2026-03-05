@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @SpringBootApplication
 @EnableJpaRepositories("com.hrishabh.algocrack.repository")
 
-@EntityScan("com.hrishabh.algocrackentityservice.models")
+@EntityScan("com.hrishabh.algocrack.models")
 @EnableJpaAuditing
 public class AlgoCrackApplication {
 

@@ -7,7 +7,7 @@ import com.hrishabh.algocrack.dto.UserSignupRequestDto;
 import com.hrishabh.algocrack.repository.UserRepository;
 import com.hrishabh.algocrack.services.AuthService;
 import com.hrishabh.algocrack.services.JwtService;
-import com.hrishabh.algocrackentityservice.models.User;
+import com.hrishabh.algocrack.models.User;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

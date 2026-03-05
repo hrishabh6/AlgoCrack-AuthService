@@ -1,6 +1,6 @@
 package com.hrishabh.algocrack.repository;
 
-import com.hrishabh.algocrackentityservice.models.User;
+import com.hrishabh.algocrack.models.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

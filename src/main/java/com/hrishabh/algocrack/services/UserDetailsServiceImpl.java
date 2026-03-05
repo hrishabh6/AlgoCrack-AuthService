@@ -2,7 +2,7 @@ package com.hrishabh.algocrack.services;
 
 import com.hrishabh.algocrack.helpers.UserPassengerDetails;
 import com.hrishabh.algocrack.repository.UserRepository;
-import com.hrishabh.algocrackentityservice.models.User;
+import com.hrishabh.algocrack.models.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

@@ -2,7 +2,7 @@ package com.hrishabh.algocrack.services;
 
 import com.hrishabh.algocrack.helpers.Validations;
 import com.hrishabh.algocrack.repository.UserRepository;
-import com.hrishabh.algocrackentityservice.models.User;
+import com.hrishabh.algocrack.models.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

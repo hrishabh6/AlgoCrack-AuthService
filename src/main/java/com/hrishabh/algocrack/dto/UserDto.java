@@ -1,6 +1,6 @@
 package com.hrishabh.algocrack.dto;
 
-import com.hrishabh.algocrackentityservice.models.User;
+import com.hrishabh.algocrack.models.User;
 import lombok.*;
 
 @Getter

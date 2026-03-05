@@ -5,7 +5,7 @@ package com.hrishabh.algocrack.services;
 import com.hrishabh.algocrack.dto.UserDto;
 import com.hrishabh.algocrack.dto.UserSignupRequestDto;
 import com.hrishabh.algocrack.repository.UserRepository;
-import com.hrishabh.algocrackentityservice.models.User;
+import com.hrishabh.algocrack.models.User;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
