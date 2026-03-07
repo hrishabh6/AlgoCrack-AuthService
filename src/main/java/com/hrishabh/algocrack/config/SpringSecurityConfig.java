@@ -43,6 +43,7 @@ public class SpringSecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/signup").permitAll()
                         .requestMatchers("/api/v1/auth/signin").permitAll()
+                        .requestMatchers("/api/v1/auth/users/**").permitAll()
                         .requestMatchers("/api/v1/auth/oauth2/**").permitAll()
                         .requestMatchers("/api/v1/auth/login/oauth2/**").permitAll()
                         .requestMatchers("/api/v1/auth/validate").authenticated()
