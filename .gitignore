@@ -37,4 +37,6 @@ out/
 .vscode/
 
 # Local-only secrets
+.env.local
+.env.*.local
 .local.secrets.properties
