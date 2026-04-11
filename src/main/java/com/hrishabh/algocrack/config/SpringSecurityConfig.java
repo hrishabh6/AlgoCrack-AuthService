@@ -111,7 +111,7 @@ public class SpringSecurityConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:3000") // or "*" for testing
+                        .allowedOrigins("http://localhost:3000", "http://algocrack.local")
                         .allowedMethods("GET", "POST", "PUT", "DELETE")
                         .allowCredentials(true);
             }
