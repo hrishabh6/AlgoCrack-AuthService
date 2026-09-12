@@ -1,6 +1,8 @@
 package com.hrishabh.algocrack.config;
 
 import com.hrishabh.algocrack.filter.JwtAuthFilter;
+import com.hrishabh.algocrack.logging.LoggingConstants;
+import com.hrishabh.algocrack.logging.StructuredLogger;
 import jakarta.servlet.http.HttpServletResponse;
 import com.hrishabh.algocrack.services.CustomOAuth2UserService;
 import com.hrishabh.algocrack.services.CustomOidcUserService;
@@ -26,6 +28,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @EnableWebSecurity
 public class SpringSecurityConfig {
 
+    private final StructuredLogger structuredLogger = new StructuredLogger(SpringSecurityConfig.class, "AuthService");
+
     @Autowired
     private JwtAuthFilter jwtAuthFilter;
 
@@ -49,6 +53,13 @@ public class SpringSecurityConfig {
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {
+                            structuredLogger.warn("Authentication entry point triggered",
+                                    LoggingConstants.EVENT_TYPE, LoggingConstants.EventType.AUTH,
+                                    LoggingConstants.TYPE, "Warn",
+                                    LoggingConstants.OPERATION, "authentication_entry_point",
+                                    LoggingConstants.STATUS, "FAILED",
+                                    LoggingConstants.HTTP_PATH, request.getRequestURI(),
+                                    LoggingConstants.ERROR_CODE, authException.getClass().getSimpleName());
                             // For API requests, return 401 JSON instead of OAuth2 redirect
                             if (request.getRequestURI().startsWith("/api/")) {
                                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

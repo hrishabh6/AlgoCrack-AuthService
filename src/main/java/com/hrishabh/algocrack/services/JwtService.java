@@ -1,5 +1,7 @@
 package com.hrishabh.algocrack.services;
 
+import com.hrishabh.algocrack.logging.LoggingConstants;
+import com.hrishabh.algocrack.logging.StructuredLogger;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import jakarta.annotation.PostConstruct;
@@ -32,6 +34,8 @@ import java.util.function.Function;
  */
 @Service
 public class JwtService {
+
+    private final StructuredLogger structuredLogger = new StructuredLogger(JwtService.class, "AuthService");
 
     @Value("${jwt.expiry}")
     private int expiry;
@@ -74,8 +78,16 @@ public class JwtService {
             X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(publicKeyBytes);
             this.publicKey = keyFactory.generatePublic(publicKeySpec);
 
-            System.out.println("✅ RSA key pair loaded successfully for JWT operations");
+            structuredLogger.info("RSA key pair loaded for JWT operations",
+                    LoggingConstants.EVENT_TYPE, LoggingConstants.EventType.LIFECYCLE,
+                    LoggingConstants.OPERATION, "jwt_key_load",
+                    LoggingConstants.STATUS, "SUCCESS");
         } catch (Exception e) {
+            structuredLogger.error("Failed to load RSA keys for JWT", e,
+                    LoggingConstants.EVENT_TYPE, LoggingConstants.EventType.ERROR,
+                    LoggingConstants.TYPE, "Error",
+                    LoggingConstants.OPERATION, "jwt_key_load",
+                    LoggingConstants.STATUS, "FAILED");
             throw new IllegalStateException("Failed to load RSA keys for JWT", e);
         }
     }
@@ -89,6 +101,11 @@ public class JwtService {
      */
     public String createToken(Map<String, Object> payload, String email) {
         Date expiryDate = new Date(System.currentTimeMillis() + expiry * 1000L);
+        structuredLogger.debug("JWT token issued",
+                LoggingConstants.EVENT_TYPE, LoggingConstants.EventType.AUTH,
+                LoggingConstants.OPERATION, "jwt_create",
+                LoggingConstants.USER_ID, payload != null ? payload.get("userId") : null,
+                "expiry_seconds", expiry);
 
         return Jwts.builder()
                 .claims(payload)
@@ -149,6 +166,11 @@ public class JwtService {
      */
     public Boolean validateToken(String token, String email) {
         final String userEmailFetchedFromToken = getEmail(token);
-        return (userEmailFetchedFromToken.equals(email)) && !isTokenExpired(token);
+        boolean valid = (userEmailFetchedFromToken.equals(email)) && !isTokenExpired(token);
+        structuredLogger.debug("JWT token validation completed",
+                LoggingConstants.EVENT_TYPE, LoggingConstants.EventType.AUTH,
+                LoggingConstants.OPERATION, "jwt_validate",
+                LoggingConstants.STATUS, valid ? "SUCCESS" : "FAILED");
+        return valid;
     }
 }

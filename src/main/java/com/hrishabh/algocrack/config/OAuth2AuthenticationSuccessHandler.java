@@ -1,5 +1,7 @@
 package com.hrishabh.algocrack.config;
 
+import com.hrishabh.algocrack.logging.LoggingConstants;
+import com.hrishabh.algocrack.logging.StructuredLogger;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,6 +16,9 @@ import java.util.Optional;
 
 @Component
 public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccessHandler {
+
+    private final StructuredLogger structuredLogger = new StructuredLogger(OAuth2AuthenticationSuccessHandler.class,
+            "AuthService");
 
     private static final String REDIRECT_URI_COOKIE = "redirect_uri";
     private static final String DEFAULT_TARGET = "http://localhost:3000/oauth2/success";
@@ -30,6 +35,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         if (authentication.getPrincipal() instanceof OAuth2User) {
             OAuth2User oauthUser = (OAuth2User) authentication.getPrincipal();
             String jwtToken = (String) oauthUser.getAttributes().get("jwt");
+            String userId = (String) oauthUser.getAttributes().get("userId");
 
             // 1. Check for redirect_uri cookie (set by RedirectUriFilter)
             Optional<String> redirectUri = getCookieValue(request, REDIRECT_URI_COOKIE);
@@ -56,8 +62,20 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
             response.addCookie(jwtCookie);
 
             // 6. Redirect
+            structuredLogger.info("OAuth2 authentication success",
+                    LoggingConstants.EVENT_TYPE, LoggingConstants.EventType.AUTH,
+                    LoggingConstants.OPERATION, "oauth2_success",
+                    LoggingConstants.USER_ID, userId,
+                    LoggingConstants.STATUS, "SUCCESS",
+                    "redirect_allowed", redirectUri.isPresent() && redirectUri.get().startsWith(ALLOWED_ORIGIN),
+                    "token_issued", jwtToken != null);
             response.sendRedirect(targetUrl);
         } else {
+            structuredLogger.warn("OAuth2 authentication success handler received unexpected principal",
+                    LoggingConstants.EVENT_TYPE, LoggingConstants.EventType.AUTH,
+                    LoggingConstants.TYPE, "Warn",
+                    LoggingConstants.OPERATION, "oauth2_success",
+                    LoggingConstants.STATUS, "FAILED");
             response.sendRedirect(DEFAULT_TARGET + "?token=error");
         }
     }

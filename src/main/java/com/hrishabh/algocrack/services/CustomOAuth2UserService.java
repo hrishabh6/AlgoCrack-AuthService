@@ -1,10 +1,10 @@
 package com.hrishabh.algocrack.services;
 
 import com.hrishabh.algocrack.helpers.Validations;
+import com.hrishabh.algocrack.logging.LoggingConstants;
+import com.hrishabh.algocrack.logging.StructuredLogger;
 import com.hrishabh.algocrack.repository.UserRepository;
 import com.hrishabh.algocrack.models.User;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -20,7 +20,7 @@ import java.util.Map;
 @Service
 public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
 
-    private static final Logger logger = LoggerFactory.getLogger(CustomOAuth2UserService.class);
+    private final StructuredLogger structuredLogger = new StructuredLogger(CustomOAuth2UserService.class, "AuthService");
 
     @Autowired
     private JwtService jwtService;
@@ -38,13 +38,19 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
 
         OAuth2User oauth2User = new DefaultOAuth2UserService().loadUser(userRequest);
+        String provider = userRequest.getClientRegistration().getRegistrationId();
 
         String email = oauth2User.getAttribute("email");
         String name = oauth2User.getAttribute("name");
         String picture = oauth2User.getAttribute("picture");
 
         if (email == null) {
-            logger.error("Email attribute is missing from OAuth2 response.");
+            structuredLogger.error("OAuth2 email missing",
+                    LoggingConstants.EVENT_TYPE, LoggingConstants.EventType.AUTH,
+                    LoggingConstants.TYPE, "Error",
+                    LoggingConstants.OPERATION, "oauth2_load_user",
+                    LoggingConstants.PROVIDER, provider,
+                    LoggingConstants.STATUS, "FAILED");
             throw new OAuth2AuthenticationException("Email not found in Google response");
         }
 
@@ -52,9 +58,10 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         String generatedUserId = validations.generateUniqueUserId(name, email);
 
         // Register or retrieve existing user
+        boolean[] created = { false };
         User user = userRepository.findByEmail(email)
                 .orElseGet(() -> {
-                    logger.info("User not found in DB. Registering new user.");
+                    created[0] = true;
                     User newUser = new User();
                     newUser.setEmail(email);
                     newUser.setName(name);
@@ -65,7 +72,6 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
         // Update picture if missing
         if (user.getImgUrl() == null && picture != null) {
-            logger.info("Updating user image URL");
             user.setImgUrl(picture);
             userRepository.save(user);
         }
@@ -77,11 +83,19 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
         // Issue JWT with claims
         String token = jwtService.createToken(claims, user.getEmail());
-        logger.info("JWT issued for user {}: {}", user.getEmail(), token);
+        structuredLogger.info("OAuth2 user authenticated",
+                LoggingConstants.EVENT_TYPE, LoggingConstants.EventType.AUTH,
+                LoggingConstants.OPERATION, "oauth2_load_user",
+                LoggingConstants.PROVIDER, provider,
+                LoggingConstants.USER_ID, user.getUserId(),
+                LoggingConstants.STATUS, "SUCCESS",
+                "user_created", created[0],
+                "token_issued", true);
 
         // Append JWT to attributes
         Map<String, Object> attributes = new HashMap<>(oauth2User.getAttributes());
         attributes.put("jwt", token);
+        attributes.put("userId", user.getUserId());
 
         return new DefaultOAuth2User(
                 oauth2User.getAuthorities(),

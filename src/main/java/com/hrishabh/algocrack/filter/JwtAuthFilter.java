@@ -1,5 +1,7 @@
 package com.hrishabh.algocrack.filter;
 
+import com.hrishabh.algocrack.logging.LoggingConstants;
+import com.hrishabh.algocrack.logging.StructuredLogger;
 import com.hrishabh.algocrack.services.JwtService;
 import com.hrishabh.algocrack.services.UserDetailsServiceImpl;
 import jakarta.servlet.FilterChain;
@@ -20,6 +22,8 @@ import java.util.Collections;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
+
+    private final StructuredLogger structuredLogger = new StructuredLogger(JwtAuthFilter.class, "AuthService");
 
     @Autowired
     private UserDetailsServiceImpl userDetailService;
@@ -45,25 +49,56 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         if (token == null) {
+            structuredLogger.warn("JWT validation failed: token cookie missing",
+                    LoggingConstants.EVENT_TYPE, LoggingConstants.EventType.AUTH,
+                    LoggingConstants.TYPE, "Warn",
+                    LoggingConstants.OPERATION, "jwt_filter",
+                    LoggingConstants.STATUS, "FAILED",
+                    LoggingConstants.HTTP_PATH, request.getRequestURI());
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
 
-        String email = jwtService.getEmail(token);
+        try {
+            String email = jwtService.getEmail(token);
 
+            if (email != null) {
 
-        if (email != null) {
+                UserDetails userDetails = userDetailService.loadUserByUsername(email);
+                if (jwtService.validateToken(token, userDetails.getUsername())) {
+                    UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
+                            new UsernamePasswordAuthenticationToken(userDetails, null, Collections.emptyList());
 
-            UserDetails userDetails = userDetailService.loadUserByUsername(email);
-            if (jwtService.validateToken(token, userDetails.getUsername())) {
-                UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
-                        new UsernamePasswordAuthenticationToken(userDetails, null, Collections.emptyList()); // ✅ Important
-
-                usernamePasswordAuthenticationToken.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request)
-                );
-                SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+                    usernamePasswordAuthenticationToken.setDetails(
+                            new WebAuthenticationDetailsSource().buildDetails(request)
+                    );
+                    SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+                    structuredLogger.info("JWT validation succeeded",
+                            LoggingConstants.EVENT_TYPE, LoggingConstants.EventType.AUTH,
+                            LoggingConstants.OPERATION, "jwt_filter",
+                            LoggingConstants.STATUS, "SUCCESS",
+                            LoggingConstants.HTTP_PATH, request.getRequestURI());
+                } else {
+                    structuredLogger.warn("JWT validation failed",
+                            LoggingConstants.EVENT_TYPE, LoggingConstants.EventType.AUTH,
+                            LoggingConstants.TYPE, "Warn",
+                            LoggingConstants.OPERATION, "jwt_filter",
+                            LoggingConstants.STATUS, "FAILED",
+                            LoggingConstants.HTTP_PATH, request.getRequestURI());
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    return;
+                }
             }
+        } catch (Exception e) {
+            structuredLogger.warn("JWT validation failed",
+                    LoggingConstants.EVENT_TYPE, LoggingConstants.EventType.AUTH,
+                    LoggingConstants.TYPE, "Warn",
+                    LoggingConstants.OPERATION, "jwt_filter",
+                    LoggingConstants.STATUS, "FAILED",
+                    LoggingConstants.HTTP_PATH, request.getRequestURI(),
+                    LoggingConstants.ERROR_CODE, e.getClass().getSimpleName());
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
         }
 
         filterChain.doFilter(request, response);
