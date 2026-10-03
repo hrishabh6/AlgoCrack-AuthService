@@ -111,7 +111,7 @@ public class AuthController {
             // Build claims with userId and role for Gateway to forward as trusted headers
             Map<String, Object> claims = new HashMap<>();
             claims.put("userId", user.getUserId());
-            claims.put("role", "USER"); // TODO: use user.getRole() when role field is added
+            claims.put("role", user.getRole().name());
 
             String jwtToken = jwtService.createToken(claims, authRequestDto.getEmail());
 
